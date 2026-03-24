@@ -1,0 +1,9 @@
+{
+  "name": "Sampath Vinayaka Devotional",
+  "description": "A premium devotional platform for Sampath Vinayaka Temple with secure administrative controls for managing events, daily darshans, and temple timings.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

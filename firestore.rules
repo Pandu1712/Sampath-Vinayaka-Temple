@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    // Fields: uid, email, displayName, photoURL, role, createdAt
+    //
+    // Collection: events
+    // Fields: title, description, date, imageUrl, location, createdBy
+    //
+    // Collection: gallery
+    // Fields: imageUrl, caption, date, type
+    //
+    // Collection: timings
+    // Fields: name, time, category
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin' ||
+        request.auth.token.email == "sampathvinayakatemplevizag@gmail.com"
+      );
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || isSuperAdmin()
+      );
+    }
+
+    function canManageEvents() {
+      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return isAdmin() || (userData.role == 'subadmin' && (userData.permissions.manageEvents == true || !('permissions' in userData)));
+    }
+
+    function canManageGallery() {
+      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return isAdmin() || (userData.role == 'subadmin' && (userData.permissions.manageGallery == true || !('permissions' in userData)));
+    }
+
+    function canManageTimings() {
+      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return isAdmin() || (userData.role == 'subadmin' && (userData.permissions.manageTimings == true || !('permissions' in userData)));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.uid is string &&
+             data.email is string &&
+             data.role in ['superadmin', 'admin', 'subadmin', 'user'];
+    }
+
+    function isValidEvent(data) {
+      return data.keys().hasAll(['title', 'date']) &&
+             data.title is string && data.title.size() < 200;
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isSuperAdmin() || (
+        isAdmin() && 
+        request.resource.data.role in ['admin', 'subadmin', 'user']
+      ) || (
+        isAuthenticated() && isOwner(userId) && 
+        request.resource.data.role == 'user' && 
+        request.auth.token.email == "sampathvinayakatemplevizag@gmail.com"
+      );
+      allow update: if isSuperAdmin() || (
+        isAdmin() && 
+        request.resource.data.role in ['admin', 'subadmin', 'user'] &&
+        resource.data.role != 'superadmin'
+      ) || (
+        isOwner(userId) && 
+        request.resource.data.role == resource.data.role
+      );
+    }
+
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if canManageEvents();
+    }
+
+    match /gallery/{itemId} {
+      allow read: if true;
+      allow write: if canManageGallery();
+    }
+
+    match /timings/{timingId} {
+      allow read: if true;
+      allow write: if canManageTimings();
+    }
+  }
+}

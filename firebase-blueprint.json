@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based access control.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["superadmin", "admin", "subadmin", "user"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Temple events and festivals.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "imageUrl": { "type": "string" },
+        "location": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["title", "date"]
+    },
+    "GalleryItem": {
+      "title": "Gallery Item",
+      "description": "Daily Darshan or temple photos.",
+      "type": "object",
+      "properties": {
+        "imageUrl": { "type": "string" },
+        "caption": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "type": { "type": "string", "enum": ["darshan", "general"] }
+      },
+      "required": ["imageUrl", "date"]
+    },
+    "Timing": {
+      "title": "Timing",
+      "description": "Temple opening, closing, and pooja timings.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "time": { "type": "string" },
+        "category": { "type": "string", "enum": ["darshan", "pooja"] }
+      },
+      "required": ["name", "time"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and roles."
+    },
+    "/events/{eventId}": {
+      "schema": "Event",
+      "description": "Temple events."
+    },
+    "/gallery/{itemId}": {
+      "schema": "GalleryItem",
+      "description": "Gallery images."
+    },
+    "/timings/{timingId}": {
+      "schema": "Timing",
+      "description": "Temple timings."
+    }
+  }
+}
